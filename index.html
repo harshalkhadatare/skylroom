@@ -3,15 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>skylroom - Live soundscape studio</title>
-  <meta name="description" content="Focus, unwind, or fall asleep to soundscapes your browser builds in real time. Rain, waves, fire, wind, birds, thunder, a singing bowl and more — every sound synthesized from raw waveforms. No files, no loops." />
+
+  <!-- ============ SEO ============ -->
+  <!-- Replace https://your-domain.com with your real domain after deploying. -->
+  <title>Skylroom — Soundscapes for Meditation, Sleep, Yoga &amp; Focus</title>
+  <meta name="description" content="Skylroom is a free online soundscape studio for meditation, yoga, sleep, relaxation and deep focus. Mix rain, ocean waves, fire, wind, thunder, birdsong, a singing bowl and white/brown noise — all generated live in your browser. No downloads, no loops." />
+  <meta name="keywords" content="meditation music, meditation sounds, relaxation sounds, sleep sounds, sleep music, white noise, brown noise, focus music, study music, ambient sounds, nature sounds, rain sounds, ocean waves, calming sounds, yoga music, zen, mindfulness, stress relief, relaxing music, soundscape generator, singing bowl, peace music, calm sounds" />
+  <meta name="author" content="Skylroom" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta name="theme-color" content="#070b16" />
+  <link rel="canonical" href="https://your-domain.com/" />
 
-  <meta property="og:title" content="skylroom - Live soundscape studio" />
-  <meta property="og:description" content="Ambient soundscapes generated live in your browser. No recordings, no loops — just sound waves." />
+  <!-- Open Graph / social -->
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Skylroom" />
+  <meta property="og:title" content="Skylroom — Soundscapes for Meditation, Sleep &amp; Focus" />
+  <meta property="og:description" content="Mix rain, waves, fire, thunder, birdsong and a singing bowl into your own calming soundscape — generated live in your browser. Free, for meditation, yoga, sleep and focus." />
+  <meta property="og:url" content="https://your-domain.com/" />
+  <meta property="og:image" content="https://your-domain.com/assets/icon-512.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Skylroom — Soundscapes for Meditation, Sleep &amp; Focus" />
+  <meta name="twitter:description" content="Your own calming soundscape for meditation, yoga, sleep and focus — built live in the browser." />
+  <meta name="twitter:image" content="https://your-domain.com/assets/icon-512.png" />
 
+  <!-- PWA / icons -->
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Skylroom" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Structured data: helps search engines understand the app -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Skylroom",
+    "url": "https://your-domain.com/",
+    "applicationCategory": "LifestyleApplication",
+    "operatingSystem": "Any (web browser)",
+    "browserRequirements": "Requires JavaScript and the Web Audio API",
+    "description": "A free online soundscape studio for meditation, yoga, sleep, relaxation and focus. Blend rain, waves, fire, wind, thunder, birdsong, a singing bowl and noise — all synthesized live in the browser.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "keywords": "meditation, sleep sounds, white noise, focus music, yoga, relaxation, ambient, nature sounds"
+  }
+  </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -20,42 +57,55 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Reactive night-sky canvas -->
   <canvas id="viz" aria-hidden="true"></canvas>
 
+  <!-- ============ Top navigation ============ -->
   <header class="topbar">
-    <div class="brand">
-      <span class="brand-dot"></span>
-      <span class="brand-name">Skylroom</span>
-    </div>
-    <nav class="top-actions" aria-label="Mix actions">
-      <!-- Theme switcher -->
-      <div class="theme-wrap">
-        <button id="themeBtn" class="ghost-btn icon-only" type="button"
-                aria-haspopup="true" aria-expanded="false" aria-label="Change theme">
-          <span id="themeIcon" aria-hidden="true"></span>
-          <span class="lbl-desktop">Theme</span>
+    <div class="topbar-inner">
+      <a class="brand" href="./" aria-label="Skylroom — home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="26" height="26">
+            <defs><linearGradient id="bm" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#66e0c8"/><stop offset="1" stop-color="#9d8cff"/>
+            </linearGradient></defs>
+            <rect width="64" height="64" rx="16" fill="url(#bm)"/>
+            <path d="M41 18a16 16 0 1 0 0 28 13 13 0 1 1 0-28Z" fill="#070b16" opacity="0.92"/>
+            <circle cx="45" cy="22" r="2.1" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="brand-name">Skylroom</span>
+      </a>
+
+      <nav class="top-actions" aria-label="Actions">
+        <button id="installBtn" class="ghost-btn icon-only" type="button" hidden>
+          <span id="installIcon" aria-hidden="true"></span><span class="lbl-desktop">Install</span>
         </button>
-        <div id="themeMenu" class="theme-menu" role="menu" aria-label="Themes" hidden></div>
-      </div>
 
-      <button id="shareBtn" class="ghost-btn" type="button">
-        <span id="shareIcon" aria-hidden="true"></span> <span class="lbl-desktop">Share</span>
-      </button>
-      <button id="saveBtn" class="ghost-btn" type="button">
-        <span id="saveIcon" aria-hidden="true"></span> <span class="lbl-desktop">Save mix</span>
-      </button>
+        <div class="theme-wrap">
+          <button id="themeBtn" class="ghost-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Change theme">
+            <span id="themeIcon" aria-hidden="true"></span>
+            <span class="lbl-desktop">Theme</span>
+            <span class="caret" aria-hidden="true"></span>
+          </button>
+          <div id="themeMenu" class="theme-menu" role="menu" aria-label="Themes" hidden></div>
+        </div>
 
-      <!-- Account -->
-      <button id="accountBtn" class="ghost-btn account-btn" type="button">
-        <span id="accountIcon" aria-hidden="true"></span>
-        <span id="accountLabel" class="lbl-desktop">Sign in</span>
-      </button>
-    </nav>
+        <button id="shareBtn" class="ghost-btn" type="button">
+          <span id="shareIcon" aria-hidden="true"></span><span class="lbl-desktop">Share</span>
+        </button>
+        <button id="saveBtn" class="ghost-btn primary-btn" type="button">
+          <span id="saveIcon" aria-hidden="true"></span><span class="lbl-desktop">Save mix</span>
+        </button>
+
+        <button id="accountBtn" class="account-btn" type="button" aria-label="Account">
+          <span id="accountAvatar" class="avatar" aria-hidden="true"></span>
+          <span id="accountLabel" class="lbl-desktop">Sign in</span>
+        </button>
+      </nav>
+    </div>
   </header>
 
   <main class="wrap">
-    <!-- Hero -->
     <section class="hero">
       <h1>Skylroom</h1>
       <p class="tagline">
@@ -74,7 +124,6 @@
       </div>
     </section>
 
-    <!-- Presets -->
     <section class="section">
       <div class="section-head">
         <h2>Start with a scene</h2>
@@ -83,7 +132,6 @@
       <div id="presetRow" class="preset-row"></div>
     </section>
 
-    <!-- Mixer -->
     <section class="section">
       <div class="section-head">
         <h2>Your mix</h2>
@@ -92,7 +140,6 @@
       <div id="mixer" class="mixer"></div>
     </section>
 
-    <!-- Dock -->
     <section class="section dock">
       <div class="panel">
         <h3>Master volume</h3>
@@ -111,18 +158,48 @@
           <button class="mini-btn focus-min" type="button" data-min="15">15m</button>
           <button class="mini-btn focus-min" type="button" data-min="25">25m</button>
           <button class="mini-btn focus-min" type="button" data-min="45">45m</button>
+          <input id="focusCustom" class="min-input" type="number" min="1" max="240"
+                 inputmode="numeric" placeholder="min" aria-label="Custom focus minutes" />
           <button id="focusStart" class="mini-btn" type="button" disabled>Start</button>
         </div>
       </div>
 
+      <div class="panel">
+        <h3>Sleep timer <span class="scope-tag">fades out</span></h3>
+        <div id="sleepDisplay" class="timer-display idle">00:00</div>
+        <div class="timer-controls">
+          <button class="mini-btn sleep-min" type="button" data-min="20">20m</button>
+          <button class="mini-btn sleep-min" type="button" data-min="30">30m</button>
+          <button class="mini-btn sleep-min" type="button" data-min="60">60m</button>
+          <input id="sleepCustom" class="min-input" type="number" min="1" max="600"
+                 inputmode="numeric" placeholder="min" aria-label="Custom sleep minutes" />
+          <button id="sleepStart" class="mini-btn" type="button" disabled>Start</button>
+        </div>
+      </div>
+
       <div class="panel saved-panel">
-        <h3>Saved mixes <span id="savedScope" class="scope-tag">on this device</span></h3>
+        <div class="panel-head">
+          <h3>Saved mixes <span id="savedScope" class="scope-tag">on this device</span></h3>
+          <span id="savedCount" class="saved-count"></span>
+        </div>
         <div id="savedList" class="saved-list"></div>
       </div>
     </section>
 
-    <!-- Ad slot (renders only when AdSense is configured in config.js) -->
     <aside id="adSlot" class="ad-slot" aria-label="Advertisement" hidden></aside>
+
+    <!-- Short descriptive block (good for SEO and for first-time visitors) -->
+    <section class="about">
+      <h2>A calm corner of the internet</h2>
+      <p>
+        Skylroom is a free soundscape studio for <strong>meditation, yoga, sleep and deep
+        focus</strong>. Layer gentle rain, ocean waves, a crackling fire, wind through the
+        trees, distant thunder, birdsong, a Tibetan singing bowl, wind chimes and soft
+        white or brown noise into a blend that fits your moment — then let it play while you
+        breathe, study, or drift off. Everything is generated live in your browser, so there
+        are no files to download and no loops to notice.
+      </p>
+    </section>
 
     <footer class="foot">
       <span>Built entirely with the Web Audio API — no audio files were used.</span>
@@ -132,7 +209,7 @@
     </footer>
   </main>
 
-  <!-- Auth modal -->
+  <!-- ============ Auth modal ============ -->
   <div id="authOverlay" class="auth-overlay" hidden>
     <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
       <button id="authClose" class="auth-close" type="button" aria-label="Close">&times;</button>
@@ -169,9 +246,26 @@
     </div>
   </div>
 
+  <!-- ============ Save-mix modal ============ -->
+  <div id="saveOverlay" class="auth-overlay" hidden>
+    <div class="auth-card save-card" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+      <button id="saveClose" class="auth-close" type="button" aria-label="Close">&times;</button>
+      <h2 id="saveTitle" class="auth-title">Save this mix</h2>
+      <p id="saveSub" class="auth-sub">Give it a name — it'll appear in your library.</p>
+      <div id="saveTags" class="save-tags" aria-hidden="true"></div>
+      <form id="saveForm" class="auth-form" novalidate>
+        <label class="field">
+          <span>Mix name</span>
+          <input id="saveName" type="text" maxlength="60" placeholder="e.g. Rainy focus" required />
+        </label>
+        <button id="saveSubmit" class="auth-submit" type="submit">Save mix</button>
+        <p id="saveHint" class="auth-error" role="alert"></p>
+      </form>
+    </div>
+  </div>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <!-- Supabase client (used only when keys are set in config.js) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="script.js"></script>

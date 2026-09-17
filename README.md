@@ -1,4 +1,4 @@
-# Drift — a live soundscape studio
+# Skylroom — a live soundscape studio
 
 Ambient soundscapes generated **live in the browser** with the Web Audio API.
 No audio files, no loops — rain, waves, fire, wind, birdsong, thunder, a stream,
@@ -138,3 +138,36 @@ entry to the `THEMES` array in `script.js`.
 - If you change your Supabase project, update the domain in the `.htaccess`
   CSP only if you tightened it from the wildcard `*.supabase.co`.
 - Private/incognito windows may block on-device saving; that's expected.
+
+---
+
+## What's new in v2 (Skylroom)
+
+**New files to upload alongside the originals:**
+`manifest.json`, `sw.js`, `robots.txt`, `sitemap.xml`, and the new images in `assets/`
+(`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`).
+
+### SEO
+`index.html` now ships a full set of tags (title, description, keywords, Open Graph,
+Twitter card, and JSON-LD structured data) aimed at people searching for meditation,
+sleep, yoga, focus and relaxation sounds. **One thing to do after you pick a domain:**
+find-and-replace `https://your-domain.com` with your real domain in three places —
+`index.html` (the canonical/OG/Twitter/JSON-LD URLs), `robots.txt`, and `sitemap.xml`.
+Then, in Google Search Console, add your site and submit `sitemap.xml` so Google indexes it.
+
+### Installable app (PWA)
+With `manifest.json` and `sw.js` in place and the site served over HTTPS, visitors get an
+**Install** button (and "Add to Home Screen" on phones). Installed users come back more
+often — good for ad revenue. The service worker is network-first, so your edits always
+show; if you ever want to disable it, delete `sw.js` and remove the small `initPWA()` call.
+
+### Timers
+- **Focus timer** now has a **custom minutes** box in addition to 15/25/45.
+- **Sleep timer** is new: it counts down, then gently **fades the sound out and pauses** —
+  ideal for falling asleep. Presets 20/30/60 plus a custom box.
+
+### Ads
+The single responsive ad unit is unchanged. Once you're approved, the easiest way to
+monetize is **AdSense Auto ads**: turn them on in your AdSense dashboard and Google places
+ads automatically — the script is already loaded when your `ca-pub-` id is set in `config.js`.
+Keep ad density reasonable so you stay within AdSense policy.

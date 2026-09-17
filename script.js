@@ -1,5 +1,5 @@
 /* =========================================================
-   Drift — a live soundscape studio
+   Skylroom — a live soundscape studio
    ---------------------------------------------------------
    Every sound you hear is generated from raw waveforms with
    the Web Audio API. There are no audio files anywhere in
@@ -37,6 +37,10 @@ const ICONS = {
   theme: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18Z" fill="currentColor" stroke="none"/></svg>',
   user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>',
   signout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h9"/></svg>',
+  install: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M8 11l4 4 4-4"/><path d="M5 20h14"/></svg>',
+  tick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+  sleep: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5Z"/><path d="M15 4h4l-4 5h4"/></svg>',
+  playmini: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.54.84l10-6.5a1 1 0 0 0 0-1.68l-10-6.5A1 1 0 0 0 8 5.5Z"/></svg>',
   play: '<svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.54.84l10-6.5a1 1 0 0 0 0-1.68l-10-6.5A1 1 0 0 0 8 5.5Z"/></svg><svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>'
 };
 
@@ -518,15 +522,25 @@ function stopSessionClock() { clearInterval(sessionTimer); sessionTimer = null; 
 
 /* ---- Focus timer ---- */
 const focus = { total: 0, remaining: 0, timer: null, running: false };
+function setFocusMinutes(mins, fromPreset) {
+  mins = Math.max(1, Math.min(600, Math.round(mins)));
+  focus.total = focus.remaining = mins * 60;
+  renderFocus();
+  ui.focusStart.disabled = false;
+  ui.focusPresets.forEach(b => b.classList.toggle("active", fromPreset && +b.dataset.min === mins));
+}
 function bindFocusTimer() {
   ui.focusPresets.forEach(btn => {
     btn.addEventListener("click", () => {
-      const mins = +btn.dataset.min;
-      focus.total = focus.remaining = mins * 60;
-      renderFocus();
-      ui.focusPresets.forEach(b => b.classList.toggle("active", b === btn));
-      ui.focusStart.disabled = false;
+      if (focus.running) stopFocus();
+      ui.focusCustom.value = "";
+      setFocusMinutes(+btn.dataset.min, true);
     });
+  });
+  ui.focusCustom.addEventListener("input", () => {
+    const v = parseInt(ui.focusCustom.value, 10);
+    if (v > 0) { if (focus.running) stopFocus(); setFocusMinutes(v, false); }
+    else { ui.focusStart.disabled = focus.total <= 0; }
   });
   ui.focusStart.addEventListener("click", toggleFocus);
   renderFocus();
@@ -534,6 +548,7 @@ function bindFocusTimer() {
 function renderFocus() {
   ui.focusDisplay.textContent = (focus.remaining > 0 || focus.total > 0) ? fmt(focus.remaining) : "00:00";
   ui.focusDisplay.classList.toggle("idle", !focus.running);
+  ui.focusDisplay.classList.toggle("running", focus.running);
   ui.focusStart.textContent = focus.running ? "Stop" : "Start";
   ui.focusStart.classList.toggle("primary", !focus.running && focus.remaining > 0);
 }
@@ -570,17 +585,95 @@ function playChime() {
   });
 }
 
+/* ---- Sleep timer: counts down, then fades out and pauses ---- */
+const sleep = { total: 0, remaining: 0, timer: null, running: false, fading: false, restore: 0 };
+function setMasterUI(v) {
+  const pct = Math.round(Math.max(0, Math.min(1, v)) * 100);
+  setMaster(pct / 100);
+  ui.masterSlider.value = pct;
+  ui.masterSlider.style.setProperty("--fill", pct + "%");
+  ui.masterPct.textContent = pct + "%";
+}
+function setSleepMinutes(mins, fromPreset) {
+  mins = Math.max(1, Math.min(600, Math.round(mins)));
+  sleep.total = sleep.remaining = mins * 60;
+  renderSleep();
+  ui.sleepStart.disabled = false;
+  ui.sleepPresets.forEach(b => b.classList.toggle("active", fromPreset && +b.dataset.min === mins));
+}
+function bindSleepTimer() {
+  ui.sleepPresets.forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (sleep.running) stopSleep();
+      ui.sleepCustom.value = "";
+      setSleepMinutes(+btn.dataset.min, true);
+    });
+  });
+  ui.sleepCustom.addEventListener("input", () => {
+    const v = parseInt(ui.sleepCustom.value, 10);
+    if (v > 0) { if (sleep.running) stopSleep(); setSleepMinutes(v, false); }
+    else { ui.sleepStart.disabled = sleep.total <= 0; }
+  });
+  ui.sleepStart.addEventListener("click", toggleSleep);
+  renderSleep();
+}
+function renderSleep() {
+  ui.sleepDisplay.textContent = (sleep.remaining > 0 || sleep.total > 0) ? fmt(sleep.remaining) : "00:00";
+  ui.sleepDisplay.classList.toggle("idle", !sleep.running);
+  ui.sleepDisplay.classList.toggle("running", sleep.running && !sleep.fading);
+  ui.sleepDisplay.classList.toggle("fading", sleep.fading);
+  ui.sleepStart.textContent = sleep.running ? "Stop" : "Start";
+  ui.sleepStart.classList.toggle("primary", !sleep.running && sleep.remaining > 0);
+}
+function toggleSleep() {
+  if (sleep.running) { stopSleep(); return; }
+  if (sleep.remaining <= 0) return;
+  if (!engine.playing) play();
+  sleep.running = true; sleep.fading = false; renderSleep();
+  sleep.timer = setInterval(() => {
+    sleep.remaining--;
+    if (sleep.remaining <= 0) { clearInterval(sleep.timer); sleep.timer = null; startSleepFade(); }
+    renderSleep();
+  }, 1000);
+}
+function stopSleep() {
+  sleep.running = false; sleep.fading = false;
+  clearInterval(sleep.timer); sleep.timer = null;
+  sleep.remaining = sleep.total; renderSleep();
+}
+function startSleepFade() {
+  sleep.fading = true; renderSleep();
+  const startVol = engine.masterLevel;
+  sleep.restore = startVol;
+  const stepMs = 250, steps = 25000 / stepMs;
+  let i = 0;
+  const fade = setInterval(() => {
+    i++;
+    setMasterUI(startVol * (1 - i / steps));
+    if (i >= steps) {
+      clearInterval(fade);
+      pause();
+      setMasterUI(sleep.restore); // restore level for next session
+      sleep.running = false; sleep.fading = false; sleep.remaining = sleep.total;
+      renderSleep();
+      toast("Sleep timer finished — good night");
+    }
+  }, stepMs);
+}
+
 /* ---------------------------------------------------------
    4. THEMES
    --------------------------------------------------------- */
 function renderThemeMenu() {
   const menu = ui.themeMenu;
-  menu.innerHTML = "";
+  menu.innerHTML = `<div class="theme-menu-title">Theme</div>`;
   THEMES.forEach(t => {
     const b = document.createElement("button");
     b.className = "theme-opt"; b.type = "button"; b.role = "menuitem";
     b.dataset.theme = t.id;
-    b.innerHTML = `<span class="sw" style="background:${t.sw}"></span>${t.name}`;
+    b.innerHTML = `<span class="sw" style="background:${t.sw}"></span>` +
+                  `<span class="nm">${escapeHtml(t.name)}</span>` +
+                  `<span class="tick">${ICONS.tick}</span>`;
     b.addEventListener("click", () => { applyTheme(t.id); closeMenus(); });
     menu.appendChild(b);
   });
@@ -623,26 +716,51 @@ function getLocalMixes() { return loadStore(STORE_MIXES, []); }
 function updateScopeTag() {
   ui.savedScope.textContent = state.user ? "in your account" : "on this device";
 }
+function mixTags(c) {
+  return CHANNELS
+    .filter(ch => (c[ch.id] || 0) > 0)
+    .sort((a, b) => (c[b.id] || 0) - (c[a.id] || 0))
+    .slice(0, 3)
+    .map(ch => ch.name);
+}
+function timeAgo(ms) {
+  if (!ms) return "";
+  const s = Math.max(0, Math.floor((Date.now() - ms) / 1000));
+  if (s < 45) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + "m ago";
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + "h ago";
+  const d = Math.floor(h / 24);
+  if (d < 7) return d + "d ago";
+  return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
 
 async function renderSaved() {
   const list = ui.savedList;
   updateScopeTag();
   list.innerHTML = `<p class="empty">Loading…</p>`;
+  if (ui.savedCount) ui.savedCount.textContent = "";
 
   let mixes = [];
   if (state.user && state.sb) {
     try {
       const { data, error } = await state.sb
-        .from("mixes").select("id,name,master,channels")
+        .from("mixes").select("id,name,master,channels,created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      mixes = (data || []).map(r => ({ id: r.id, name: r.name, master: r.master, c: r.channels || {}, cloud: true }));
+      mixes = (data || []).map(r => ({
+        id: r.id, name: r.name, master: r.master, c: r.channels || {},
+        at: r.created_at ? Date.parse(r.created_at) : 0, cloud: true
+      }));
     } catch (e) {
       list.innerHTML = `<p class="empty">Couldn't reach your saved mixes. ${escapeHtml(e.message || "")}</p>`;
       return;
     }
   } else {
-    mixes = getLocalMixes().map((m, idx) => ({ idx, name: m.name, master: m.master, c: m.c, cloud: false }));
+    mixes = getLocalMixes().map((m, idx) => ({
+      idx, name: m.name, master: m.master, c: m.c, at: m.savedAt || 0, cloud: false
+    }));
   }
 
   list.innerHTML = "";
@@ -650,15 +768,26 @@ async function renderSaved() {
     list.innerHTML = `<p class="empty">No saved mixes yet. Build a blend you like, then press <b>Save mix</b> to keep it ${state.user ? "in your account" : "here"}.</p>`;
     return;
   }
+  if (ui.savedCount) ui.savedCount.textContent = mixes.length + (mixes.length === 1 ? " mix" : " mixes");
+
   mixes.forEach(m => {
+    const tags = mixTags(m.c).map(t => `<span class="save-tag">${escapeHtml(t)}</span>`).join("");
     const item = document.createElement("div");
     item.className = "saved-item";
     item.innerHTML = `
-      <button class="load" type="button"><span class="swatch"></span>${escapeHtml(m.name)}</button>
-      <button class="del" type="button" aria-label="Delete ${escapeHtml(m.name)}">${ICONS.trash}</button>
+      <button class="saved-play" type="button" aria-label="Play ${escapeHtml(m.name)}">${ICONS.playmini}</button>
+      <div class="saved-main" role="button" tabindex="0">
+        <div class="saved-name">${escapeHtml(m.name)}</div>
+        <div class="saved-meta">${tags}<span class="saved-time">${timeAgo(m.at)}</span></div>
+      </div>
+      <button class="saved-del" type="button" aria-label="Delete ${escapeHtml(m.name)}">${ICONS.trash}</button>
     `;
-    item.querySelector(".load").addEventListener("click", () => { loadMix(m); if (!engine.playing) play(); });
-    item.querySelector(".del").addEventListener("click", () => deleteMix(m));
+    const go = () => { loadMix(m); if (!engine.playing) play(); };
+    item.querySelector(".saved-play").addEventListener("click", go);
+    const main = item.querySelector(".saved-main");
+    main.addEventListener("click", go);
+    main.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); } });
+    item.querySelector(".saved-del").addEventListener("click", () => deleteMix(m));
     list.appendChild(item);
   });
 }
@@ -675,28 +804,50 @@ function loadMix(m, silent) {
   if (!silent && m.name) toast(`${m.name} loaded`);
 }
 
-async function saveCurrentMix() {
+function openSaveDialog() {
   const anyOn = CHANNELS.some(c => engine.levels[c.id] > 0.001);
   if (!anyOn) { toast("Add a sound before saving"); return; }
-  const name = (prompt("Name this mix", suggestName()) || "").trim();
-  if (!name) return;
-  const mix = currentMix();
+  const tags = mixTags(currentMix().c);
+  ui.saveTags.innerHTML = tags.map(t => `<span class="save-tag">${escapeHtml(t)}</span>`).join("");
+  ui.saveSub.textContent = state.user
+    ? "Give it a name — it'll sync to your account and every device."
+    : "Give it a name — it'll be saved on this device.";
+  ui.saveHint.textContent = "";
+  ui.saveName.value = suggestName();
+  ui.saveOverlay.removeAttribute("hidden");
+  setTimeout(() => { ui.saveName.focus(); ui.saveName.select(); }, 40);
+}
+function closeSave() { ui.saveOverlay.setAttribute("hidden", ""); }
 
+async function onSaveSubmit(ev) {
+  ev.preventDefault();
+  const name = ui.saveName.value.trim().slice(0, 60);
+  if (!name) { ui.saveHint.textContent = "Please enter a name."; return; }
+  ui.saveSubmit.disabled = true;
+  const ok = await doSaveMix(name);
+  ui.saveSubmit.disabled = false;
+  if (ok) closeSave();
+}
+
+async function doSaveMix(name) {
+  const mix = currentMix();
   if (state.user && state.sb) {
     try {
       const { error } = await state.sb.from("mixes").insert({
-        user_id: state.user.id, name: name.slice(0, 60), master: mix.master, channels: mix.c
+        user_id: state.user.id, name, master: mix.master, channels: mix.c
       });
       if (error) throw error;
       toast("Mix saved to your account");
       renderSaved();
-    } catch (e) { toast("Save failed: " + (e.message || "error")); }
+      return true;
+    } catch (e) { ui.saveHint.textContent = "Save failed: " + (e.message || "error"); return false; }
   } else {
     const arr = getLocalMixes();
-    arr.unshift(Object.assign({ name: name.slice(0, 60) }, mix));
+    arr.unshift(Object.assign({ name, savedAt: Date.now() }, mix));
     writeStore(STORE_MIXES, arr.slice(0, 24));
     toast("Mix saved on this device");
     renderSaved();
+    return true;
   }
 }
 
@@ -912,8 +1063,10 @@ function initAuth() {
 function setUser(user) {
   const was = state.user ? state.user.id : null;
   state.user = user;
-  const label = user ? (displayNameOf(user)) : "Sign in";
-  ui.accountLabel.textContent = label;
+  const name = user ? displayNameOf(user) : "Sign in";
+  ui.accountLabel.textContent = name;
+  if (user) ui.accountAvatar.textContent = (name.trim()[0] || "?").toUpperCase();
+  else ui.accountAvatar.innerHTML = ICONS.user;
   ui.accountBtn.classList.toggle("signed-in", !!user);
   if (user) closeAuth();
   if ((user ? user.id : null) !== was) renderSaved();
@@ -933,7 +1086,7 @@ function closeAuth() { ui.authOverlay.setAttribute("hidden", ""); }
 function toggleAuthMode() {
   authMode = authMode === "signin" ? "signup" : "signin";
   const signup = authMode === "signup";
-  ui.authTitle.textContent = signup ? "Create your account" : "Welcome to Drift";
+  ui.authTitle.textContent = signup ? "Create your account" : "Welcome to Skylroom";
   ui.authSubmit.textContent = signup ? "Create account" : "Sign in";
   ui.authToggleText.textContent = signup ? "Already have an account?" : "New here?";
   ui.authToggleBtn.textContent = signup ? "Sign in instead" : "Create an account";
@@ -1028,6 +1181,33 @@ function initAds() {
 }
 
 /* ---------------------------------------------------------
+   PWA — installable app + offline shell
+   --------------------------------------------------------- */
+let deferredInstall = null;
+function initPWA() {
+  const secure = location.protocol === "https:" ||
+    ["localhost", "127.0.0.1"].indexOf(location.hostname) !== -1;
+  if ("serviceWorker" in navigator && secure) {
+    navigator.serviceWorker.register("sw.js").catch(() => { /* ignore */ });
+  }
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstall = e;
+    ui.installBtn.hidden = false;
+  });
+  ui.installBtn.addEventListener("click", async () => {
+    if (!deferredInstall) return;
+    deferredInstall.prompt();
+    try { await deferredInstall.userChoice; } catch (e) { /* ignore */ }
+    deferredInstall = null;
+    ui.installBtn.hidden = true;
+  });
+  window.addEventListener("appinstalled", () => {
+    ui.installBtn.hidden = true; toast("Skylroom installed");
+  });
+}
+
+/* ---------------------------------------------------------
    11. KEYBOARD
    --------------------------------------------------------- */
 function bindKeyboard() {
@@ -1035,9 +1215,10 @@ function bindKeyboard() {
     const tag = (ev.target.tagName || "").toLowerCase();
     const typing = (tag === "input" && ev.target.type !== "range") || tag === "textarea";
     if (typing) return;
-    if (!ui.authOverlay.hasAttribute("hidden") && ev.key !== "Escape") return;
+    const modalOpen = !ui.authOverlay.hasAttribute("hidden") || !ui.saveOverlay.hasAttribute("hidden");
+    if (modalOpen && ev.key !== "Escape") return;
 
-    if (ev.key === "Escape") { closeMenus(); closeAuth(); return; }
+    if (ev.key === "Escape") { closeMenus(); closeAuth(); closeSave(); return; }
     if (ev.code === "Space") { ev.preventDefault(); togglePlay(); }
     else if (/^Digit[1-9]$/.test(ev.code)) {
       const idx = +ev.code.slice(5) - 1;
@@ -1048,7 +1229,7 @@ function bindKeyboard() {
       clearActivePreset();
       if (cur === 0 && !engine.playing) play();
     } else if (ev.key.toLowerCase() === "s") {
-      saveCurrentMix();
+      openSaveDialog();
     }
   });
 }
@@ -1073,11 +1254,28 @@ function cacheDom() {
   ui.focusDisplay = qs("#focusDisplay");
   ui.focusStart = qs("#focusStart");
   ui.focusPresets = Array.from(document.querySelectorAll(".focus-min"));
+  ui.focusCustom = qs("#focusCustom");
+  ui.sleepDisplay = qs("#sleepDisplay");
+  ui.sleepStart = qs("#sleepStart");
+  ui.sleepCustom = qs("#sleepCustom");
+  ui.sleepPresets = Array.from(document.querySelectorAll(".sleep-min"));
   ui.themeBtn = qs("#themeBtn");
   ui.themeMenu = qs("#themeMenu");
   ui.accountBtn = qs("#accountBtn");
   ui.accountLabel = qs("#accountLabel");
+  ui.accountAvatar = qs("#accountAvatar");
+  ui.installBtn = qs("#installBtn");
   ui.adSlot = qs("#adSlot");
+  ui.savedCount = qs("#savedCount");
+  // Save modal
+  ui.saveOverlay = qs("#saveOverlay");
+  ui.saveClose = qs("#saveClose");
+  ui.saveForm = qs("#saveForm");
+  ui.saveName = qs("#saveName");
+  ui.saveSubmit = qs("#saveSubmit");
+  ui.saveHint = qs("#saveHint");
+  ui.saveTags = qs("#saveTags");
+  ui.saveSub = qs("#saveSub");
   // Auth modal
   ui.authOverlay = qs("#authOverlay");
   ui.authClose = qs("#authClose");
@@ -1101,7 +1299,8 @@ function boot() {
   qs("#saveIcon").innerHTML = ICONS.save;
   qs("#masterIcon").innerHTML = ICONS.volume;
   qs("#themeIcon").innerHTML = ICONS.theme;
-  qs("#accountIcon").innerHTML = ICONS.user;
+  qs("#installIcon").innerHTML = ICONS.install;
+  ui.accountAvatar.innerHTML = ICONS.user;
 
   // Theme: restore saved choice first so first paint matches
   const savedTheme = loadStore(STORE_THEME, "midnight");
@@ -1112,15 +1311,21 @@ function boot() {
   renderChannels();
   bindMaster();
   bindFocusTimer();
+  bindSleepTimer();
   bindKeyboard();
   initViz();
   initAuth();
   initAds();
+  initPWA();
   renderSaved();
 
   ui.playBtn.addEventListener("click", togglePlay);
   ui.shareBtn.addEventListener("click", share);
-  ui.saveBtn.addEventListener("click", saveCurrentMix);
+  ui.saveBtn.addEventListener("click", openSaveDialog);
+  // Save modal wiring
+  ui.saveClose.addEventListener("click", closeSave);
+  ui.saveOverlay.addEventListener("click", ev => { if (ev.target === ui.saveOverlay) closeSave(); });
+  ui.saveForm.addEventListener("submit", onSaveSubmit);
   ui.themeBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleThemeMenu(); });
   document.addEventListener("click", (e) => {
     if (!e.target.closest("#themeMenu") && !e.target.closest("#themeBtn") &&

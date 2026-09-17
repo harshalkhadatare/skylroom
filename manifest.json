@@ -1,0 +1,17 @@
+{
+  "name": "Skylroom — soundscapes for focus, sleep & calm",
+  "short_name": "Skylroom",
+  "description": "Ambient soundscapes generated live in your browser for meditation, yoga, sleep, and focus. Rain, waves, fire, thunder, a singing bowl and more.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070b16",
+  "theme_color": "#070b16",
+  "categories": ["lifestyle", "health", "music", "productivity"],
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
