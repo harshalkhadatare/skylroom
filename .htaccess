@@ -1,0 +1,57 @@
+# =========================================================
+# Drift — security & performance for Apache / GoDaddy cPanel
+# Upload this file into public_html alongside index.html.
+# (Dot-files can be hidden in cPanel File Manager — enable
+#  "Show Hidden Files" in Settings if you don't see it.)
+# =========================================================
+
+# ---- Force HTTPS ----------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# ---- Security headers -----------------------------------
+<IfModule mod_headers.c>
+  # HSTS: tell browsers to always use HTTPS (after you've confirmed SSL works)
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=()"
+
+  # Content Security Policy.
+  # Allows: this site, Google Fonts, the Supabase JS SDK (jsDelivr),
+  # your Supabase project (*.supabase.co), Google sign-in, and Google AdSense.
+  # If you are NOT using ads, you can delete every googlesyndication /
+  # googleadservices / doubleclick entry and the 'unsafe-inline' in script-src.
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.googleadservices.com https://tpc.googlesyndication.com https://www.google.com https://adservice.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com; frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://accounts.google.com; base-uri 'self'; form-action 'self' https://accounts.google.com; frame-ancestors 'self'; upgrade-insecure-requests"
+</IfModule>
+
+# ---- Caching (static assets) ----------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css            "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType image/svg+xml       "access plus 30 days"
+  # Don't cache the HTML aggressively so updates show up quickly
+  ExpiresByType text/html           "access plus 0 seconds"
+</IfModule>
+
+# ---- Gzip compression -----------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml
+</IfModule>
+
+# ---- Correct MIME types ---------------------------------
+<IfModule mod_mime.c>
+  AddType image/svg+xml .svg
+</IfModule>
+
+# ---- Block access to config backups & dotfiles ----------
+<FilesMatch "\.(bak|old|orig|save|swp|sql)$">
+  Require all denied
+</FilesMatch>

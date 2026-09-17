@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="midnight">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Drift — a live soundscape studio</title>
+  <meta name="description" content="Focus, unwind, or fall asleep to soundscapes your browser builds in real time. Rain, waves, fire, wind, birds, thunder, a singing bowl and more — every sound synthesized from raw waveforms. No files, no loops." />
+  <meta name="theme-color" content="#070b16" />
+
+  <meta property="og:title" content="Drift — a live soundscape studio" />
+  <meta property="og:description" content="Ambient soundscapes generated live in your browser. No recordings, no loops — just sound waves." />
+  <meta property="og:type" content="website" />
+
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Reactive night-sky canvas -->
+  <canvas id="viz" aria-hidden="true"></canvas>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span class="brand-name">Drift</span>
+    </div>
+    <nav class="top-actions" aria-label="Mix actions">
+      <!-- Theme switcher -->
+      <div class="theme-wrap">
+        <button id="themeBtn" class="ghost-btn icon-only" type="button"
+                aria-haspopup="true" aria-expanded="false" aria-label="Change theme">
+          <span id="themeIcon" aria-hidden="true"></span>
+          <span class="lbl-desktop">Theme</span>
+        </button>
+        <div id="themeMenu" class="theme-menu" role="menu" aria-label="Themes" hidden></div>
+      </div>
+
+      <button id="shareBtn" class="ghost-btn" type="button">
+        <span id="shareIcon" aria-hidden="true"></span> <span class="lbl-desktop">Share</span>
+      </button>
+      <button id="saveBtn" class="ghost-btn" type="button">
+        <span id="saveIcon" aria-hidden="true"></span> <span class="lbl-desktop">Save mix</span>
+      </button>
+
+      <!-- Account -->
+      <button id="accountBtn" class="ghost-btn account-btn" type="button">
+        <span id="accountIcon" aria-hidden="true"></span>
+        <span id="accountLabel" class="lbl-desktop">Sign in</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <!-- Hero -->
+    <section class="hero">
+      <h1>Drift</h1>
+      <p class="tagline">
+        Focus, unwind, or fall asleep to soundscapes your browser builds in real time.
+        Rain, fire, waves, birdsong, thunder and a singing bowl — <strong>every sound is
+        synthesized from raw waveforms</strong>, so there are no recordings and no loops.
+        Press play and blend your own.
+      </p>
+
+      <div class="transport">
+        <button id="playBtn" class="play" type="button" aria-label="Play"></button>
+        <div class="transport-meta">
+          <div id="playState" class="transport-state">Paused</div>
+          <div id="sessionTime" class="transport-time" aria-label="Session length">00:00</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Presets -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Start with a scene</h2>
+        <span class="hint">Or build your own below</span>
+      </div>
+      <div id="presetRow" class="preset-row"></div>
+    </section>
+
+    <!-- Mixer -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Your mix</h2>
+        <span class="hint">Slide to taste · press 1–9 to toggle</span>
+      </div>
+      <div id="mixer" class="mixer"></div>
+    </section>
+
+    <!-- Dock -->
+    <section class="section dock">
+      <div class="panel">
+        <h3>Master volume</h3>
+        <div class="master-row">
+          <span id="masterIcon" class="master-icon" aria-hidden="true"></span>
+          <input id="masterSlider" type="range" min="0" max="100" value="78"
+                 aria-label="Master volume" style="--fill:78%" />
+          <span id="masterPct" class="master-pct">78%</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Focus timer</h3>
+        <div id="focusDisplay" class="timer-display idle">00:00</div>
+        <div class="timer-controls">
+          <button class="mini-btn focus-min" type="button" data-min="15">15m</button>
+          <button class="mini-btn focus-min" type="button" data-min="25">25m</button>
+          <button class="mini-btn focus-min" type="button" data-min="45">45m</button>
+          <button id="focusStart" class="mini-btn" type="button" disabled>Start</button>
+        </div>
+      </div>
+
+      <div class="panel saved-panel">
+        <h3>Saved mixes <span id="savedScope" class="scope-tag">on this device</span></h3>
+        <div id="savedList" class="saved-list"></div>
+      </div>
+    </section>
+
+    <!-- Ad slot (renders only when AdSense is configured in config.js) -->
+    <aside id="adSlot" class="ad-slot" aria-label="Advertisement" hidden></aside>
+
+    <footer class="foot">
+      <span>Built entirely with the Web Audio API — no audio files were used.</span>
+      <div class="keys">
+        <kbd>Space</kbd> play · <kbd>1</kbd>–<kbd>9</kbd> toggle sounds · <kbd>S</kbd> save
+      </div>
+    </footer>
+  </main>
+
+  <!-- Auth modal -->
+  <div id="authOverlay" class="auth-overlay" hidden>
+    <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <button id="authClose" class="auth-close" type="button" aria-label="Close">&times;</button>
+      <h2 id="authTitle" class="auth-title">Welcome to Drift</h2>
+      <p class="auth-sub">Sign in to save your mixes to the cloud and reach them from any device.</p>
+
+      <button id="googleBtn" class="google-btn" type="button">
+        <span class="g-mark" aria-hidden="true"></span> Continue with Google
+      </button>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <form id="authForm" class="auth-form" novalidate>
+        <label class="field">
+          <span>Email</span>
+          <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input id="authPass" type="password" autocomplete="current-password" placeholder="At least 6 characters" minlength="6" required />
+        </label>
+        <label class="field" id="nameField" hidden>
+          <span>Display name</span>
+          <input id="authName" type="text" autocomplete="name" placeholder="What should we call you?" />
+        </label>
+        <button id="authSubmit" class="auth-submit" type="submit">Sign in</button>
+        <p id="authError" class="auth-error" role="alert"></p>
+      </form>
+
+      <p class="auth-toggle">
+        <span id="authToggleText">New here?</span>
+        <button id="authToggleBtn" type="button">Create an account</button>
+      </p>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Supabase client (used only when keys are set in config.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
