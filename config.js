@@ -14,7 +14,7 @@
 window.DRIFT_CONFIG = {
   /* ---- Supabase (accounts + cloud-saved mixes) ---- */
   // From: Supabase dashboard → Project Settings → API
-  SUPABASE_URL:      "https://supabase.com/dashboard/project/nqzbyzxtevwqhsioyfkb",        // e.g. https://abcd1234.supabase.co
+  SUPABASE_URL:      "https://nqzbyzxtevwqhsioyfkb.supabase.co",        // e.g. https://abcd1234.supabase.co
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xemJ5enh0ZXZ3cWhzaW95ZmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2Mjc1MDEsImV4cCI6MjEwNTIwMzUwMX0.bUZE5_8lnElZw8Q9KQyisBvk918TZFF1NHGCY_Ii_yM",   // the public "anon" key (safe to expose)
 
   /* ---- Google AdSense ---- */
