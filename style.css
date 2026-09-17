@@ -125,6 +125,11 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* The [hidden] attribute must always win over a component's own
+   display rule (otherwise the auth modal, theme menu and ad slot
+   would show on load). */
+[hidden] { display: none !important; }
+
 html { scroll-behavior: smooth; }
 
 body {
